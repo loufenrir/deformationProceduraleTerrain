@@ -153,10 +153,105 @@ private void calculerNormaleVertex(uint num_Vertex)
     //   A COMPLETER !!
 }
 
-private void creerLeMeshTerrain()
+    private void creerLeMeshTerrain()
     {
-        //   A COMPLETER !!
+        //Puissqnce de 2 resolution
+        resolution = (ushort)(1 << puissance2Resolution);
 
+        //Nb vertices
+        p_dimVertices = (uint)resolution * resolution;
+
+        // Nb triqngle
+        p_dimTriangles = 2u * ((uint)resolution - 1) * ((uint)resolution - 1);
+
+        // dist entre deux vertices voisin
+        p_dimInterVertices = dimension / (resolution - 1);
+
+        // Tableau de vertices
+        p_vertices = new Vector3[(int)p_dimVertices];
+
+        // Tableau normales
+        p_normals = new Vector3[(int)p_dimVertices];
+
+        // Tableau coordonnées UV
+        Vector2[] uv = new Vector2[(int)p_dimVertices];
+
+        // Tableau indices triangles
+        p_triangles = new int[(int)p_dimTriangles * 3];
+
+        // Pos vertices
+        for (int z = 0; z < resolution; z++)
+        {
+            for (int x = 0; x < resolution; x++)
+            {
+                int index = z * resolution + x;
+                float positionX = x * p_dimInterVertices;
+                float positionZ = z * p_dimInterVertices;
+
+                // centrage pivot pos
+                if (CentrerPivot)
+                {
+                    positionX -= dimension / 2f;
+                    positionZ -= dimension / 2f;
+                }
+                p_vertices[index] = new Vector3(positionX, 0, positionZ);
+
+                // Coordonnées uv vertex
+                float u = (float)x / (resolution - 1);
+                float v = (float)z / (resolution - 1);
+                uv[index] = new Vector2(u, v);
+
+                // Normale vertex haut
+                p_normals[index] = Vector3.up;
+            }
+        }
+        // Création des triangles
+        int indexTriangle = 0;
+
+        for (int z = 0; z < resolution - 1; z++)
+        {
+            for (int x = 0; x < resolution - 1; x++)
+            {
+                int basGauche = z * resolution + x;
+                int basDroit = basGauche + 1;
+                int hautGauche = basGauche + resolution;
+                int hautDroit = hautGauche + 1;
+
+                // Triangle 1
+                p_triangles[indexTriangle++] = basGauche;
+                p_triangles[indexTriangle++] = hautGauche;
+                p_triangles[indexTriangle++] = basDroit;
+
+                // Triangle d'apres
+                p_triangles[indexTriangle++] = basDroit;
+                p_triangles[indexTriangle++] = hautGauche;
+                p_triangles[indexTriangle++] = hautDroit;
+            }
+        }
+
+        // Création Mesh
+        p_mesh = new Mesh();
+        p_mesh.name = "Terrain Procedural";
+
+        // Pouvoir avoir + de 65535 vertices
+        p_mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+
+        // Données Mesh
+        p_mesh.vertices = p_vertices;
+        p_mesh.triangles = p_triangles;
+        p_mesh.uv = uv;
+        p_mesh.normals = p_normals;
+
+        // Recalcul des limites Mesh
+        p_mesh.RecalculateBounds();
+
+        // Avoir les composants
+        p_meshFilter = GetComponent<MeshFilter>();
+        p_meshCollider = GetComponent<MeshCollider>();
+
+        // Partager au maillage
+        p_meshFilter.sharedMesh = p_mesh;
+        p_meshCollider.sharedMesh = p_mesh;
     }
 
     void Start()

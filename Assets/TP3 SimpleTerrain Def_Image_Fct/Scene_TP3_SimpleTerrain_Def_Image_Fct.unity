@@ -223,8 +223,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bb4b4609b2012694fb1040759238d2bc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CreationSimpleTerrain
-  dimension: 20
-  puissance2Resolution: 1
+  dimension: 100
+  puissance2Resolution: 4
   CentrerPivot: 1
   resolution: 1
   choixModeDeformation: 0
