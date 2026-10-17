@@ -14,14 +14,14 @@ using System.Security.Cryptography;
 
 public class CreationSimpleTerrain : MonoBehaviour
 {
-    [Range(1, 2000)] 
+    [Range(1, 2000)]
     public float dimension = 100;
     [Range(1, 15)]
-    [Tooltip("La resolution sera 2 élévé à la puissance de cette valeur 2^n " )]
+    [Tooltip("La resolution sera 2 élévé à la puissance de cette valeur 2^n ")]
     public int puissance2Resolution = 1;
     public bool CentrerPivot = true;
     [HideInInspector] public ushort resolution;
-    
+
 
 
     [Tooltip("Information sur le mode de génération :  ")]
@@ -31,7 +31,7 @@ public class CreationSimpleTerrain : MonoBehaviour
         Texture
     }
     public ChoixModeDeformation choixModeDeformation;
-      public enum TypeFonction
+    public enum TypeFonction
     {
         Sinusoide,
         Collines,
@@ -41,23 +41,23 @@ public class CreationSimpleTerrain : MonoBehaviour
     public TypeFonction typeFonction;
 
 
-    [Tooltip("Choix de la première HeightMap à appliquer ")] 
+    [Tooltip("Choix de la première HeightMap à appliquer ")]
     public int numTexture;
     [Tooltip("Les HeightMaps disponibles ")]
-    public List<Texture2D>  textures;
+    public List<Texture2D> textures;
 
 
 
 
-    private uint    p_dimVertices;
-    private uint    p_dimTriangles;
+    private uint p_dimVertices;
+    private uint p_dimTriangles;
 
     private MeshCollider p_meshCollider;
-    private MeshFilter  p_meshFilter;
-    private Mesh        p_mesh;
-    private Vector3[]   p_vertices;
-    private Vector3[]   p_normals;
-    private int[]       p_triangles;
+    private MeshFilter p_meshFilter;
+    private Mesh p_mesh;
+    private Vector3[] p_vertices;
+    private Vector3[] p_normals;
+    private int[] p_triangles;
 
 
 
@@ -77,7 +77,7 @@ public class CreationSimpleTerrain : MonoBehaviour
         //    EditorUtility.DisplayDialog("MeshFilter initial supprimé avant génération procédurale ! ", "Le script génére un mesh procédural . Le mesh existant " + GetComponent<MeshFilter>().mesh.name + " a été disocié de  l'objet " + gameObject.name, "j'ai compris ! ");
         //    DestroyImmediate(GetComponent<MeshFilter>());
         //}
-        
+
         gameObject.AddComponent<MeshFilter>();
 
         Collider[] colliders = GetComponents<Collider>();
@@ -90,7 +90,7 @@ public class CreationSimpleTerrain : MonoBehaviour
         else
             EditorUtility.DisplayDialog("Le component MeshCollider est nécessaire à la sélection", "MeshCollider ajouté au gameObject ! ", "j'ai compris ! ");
         p_meshCollider = gameObject.AddComponent<MeshCollider>();
-        
+
         if (GetComponent<MeshRenderer>() == null)
         {
             EditorUtility.DisplayDialog("Le component MeshRenderer est nécessaire à la sélection", "MeshCollider ajouté au gameObject ! ", "j'ai compris ! ");
@@ -98,7 +98,7 @@ public class CreationSimpleTerrain : MonoBehaviour
         }
 
 
-        
+
     }
 
 
@@ -113,42 +113,136 @@ public class CreationSimpleTerrain : MonoBehaviour
         maskPickingTerrain = LayerMask.GetMask("L_PickingTerrain");
 
         /*   A COMPLETER !! */
-   }
+    }
 
-
-
-
-
-        private void appliquerDeformation_Fonction()
+    private void appliquerDeformation_Fonction()
     {
-            /*   A COMPLETER !! 
-            switch (typeFonction)
+        switch (typeFonction)
         {
             case TypeFonction.Sinusoide:
-                 //   A COMPLETER !! 
+
+                float amplitude = 10f;
+                float frequence = 0.1f;
+
+                for (int i = 0; i < p_vertices.Length; i++)
+                {
+                    Vector3 vertex = p_vertices[i];
+
+                    vertex.y = amplitude * Mathf.Sin(vertex.x * frequence);
+
+                    p_vertices[i] = vertex;
+                }
                 break;
+
             case TypeFonction.Collines:
-                //  A COMPLETER !! 
-                break;
+                {
+                    float hauteur = 20f;
+                    float largeur = 15f;
+
+                    float centreX = 0f;
+                    float centreZ = 0f;
+
+                    for (int i = 0; i < p_vertices.Length; i++)
+                    {
+                        Vector3 vertex = p_vertices[i];
+
+                        float dx = vertex.x - centreX;
+                        float dz = vertex.z - centreZ;
+
+                        float distanceCarree = dx * dx + dz * dz;
+
+                        vertex.y = hauteur * Mathf.Exp(
+                            -distanceCarree / (2f * largeur * largeur)
+                        );
+
+                        p_vertices[i] = vertex;
+                    }
+                    break;
+                }
+
             case TypeFonction.Perlin:
-                //  A COMPLETER !!
-            }
-            break;
+                {
+                    float amplitudePerlin = 20f;
+                    float frequencePerlin = 0.05f;
+
+                    // Ajout d'aléatoire au bruit de Perlin pour un effet plus natuel de montagne
+                    float offsetX = Random.Range(0f, 1000f);
+                    float offsetZ = Random.Range(0f, 1000f);
+
+                    for (int i = 0; i < p_vertices.Length; i++)
+                    {
+                        Vector3 vertex = p_vertices[i];
+                        float bruit = Mathf.PerlinNoise(
+                        vertex.x * frequencePerlin + offsetX,
+                        vertex.z * frequencePerlin + offsetZ
+                        );
+
+                        vertex.y = bruit * amplitudePerlin;
+                        p_vertices[i] = vertex;
+                    }
+                    break;
+                }
         }
-            */
+        // Actualisation pos Mesh
+        p_mesh.vertices = p_vertices;
 
-        
- //   A COMPLETER !!
-        
-     }
+        // Recalcul normales
+        p_mesh.RecalculateNormals();
 
+        // Actualisation limites Mesh
+        p_mesh.RecalculateBounds();
 
+        // Actu meshCollider
+        p_meshCollider.sharedMesh = null;
+        p_meshCollider.sharedMesh = p_mesh;
+    }
     private void appliquerDeformation_Texture()
     {
-    //   A COMPLETER !! 
-}
+        // A COMPLETER !!
+    }
 
-private void calculerNormaleVertex(uint num_Vertex)
+
+
+    private void creerColline(Vector3 positionClic)
+    {
+        // Hauteur aleat colline
+        float hauteur = Random.Range(10f, 30f);
+        // Largeur aleat colline
+        float largeur = Random.Range(10f, 25f);
+
+        // Conversion de la position du clic en coordonnées locales
+        Vector3 centre = transform.InverseTransformPoint(positionClic);
+
+        for (int i = 0; i < p_vertices.Length; i++)
+        {
+            Vector3 vertex = p_vertices[i];
+
+            float dx = vertex.x - centre.x;
+            float dz = vertex.z - centre.z;
+
+            float distanceCarree = dx * dx + dz * dz;
+
+            float elevation = hauteur * Mathf.Exp(
+                -distanceCarree / (2f * largeur * largeur)
+            );
+
+            // Colline
+            vertex.y += elevation;
+
+            p_vertices[i] = vertex;
+        }
+
+        // Actualisation maillage
+        p_mesh.vertices = p_vertices;
+        p_mesh.RecalculateNormals();
+        p_mesh.RecalculateBounds();
+
+        // Recharger quand clic
+        p_meshCollider.sharedMesh = null;
+        p_meshCollider.sharedMesh = p_mesh;
+    }
+
+    private void calculerNormaleVertex(uint num_Vertex)
     {
     //   A COMPLETER !!
 }
@@ -277,6 +371,23 @@ private void calculerNormaleVertex(uint num_Vertex)
             appliquerDeformation_Texture();
             // l'image'suivante sera utilisée au prochain appel     
             //numImage = (numImage+ 1) % nbImages);
+        }
+        // Clic impact
+        if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
+        {
+            Ray rayon = p_cam.ScreenPointToRay(Mouse.current.position.ReadValue());
+            RaycastHit impact;
+            // Impact, vérif si ça marche, Debug
+            if (Physics.Raycast(rayon, out impact, Mathf.Infinity, maskPickingTerrain))
+            {
+                Debug.Log("clic terrain: " + impact.point);
+                // Clic coline
+                if (choixModeDeformation == ChoixModeDeformation.Fonction &&
+                    typeFonction == TypeFonction.Collines)
+                {
+                    creerColline(impact.point);
+                }
+            }
         }
 
 
