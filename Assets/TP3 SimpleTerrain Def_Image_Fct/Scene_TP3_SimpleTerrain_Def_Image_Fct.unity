@@ -228,9 +228,13 @@ MonoBehaviour:
   CentrerPivot: 1
   resolution: 1
   choixModeDeformation: 0
+  modeCalculNormales: 0
   typeFonction: 1
   numTexture: 0
-  textures: []
+  textures:
+  - {fileID: 2800000, guid: 1a0243c0c6afd3043b3fee7fc850f207, type: 3}
+  - {fileID: 2800000, guid: a1358046685413a4c91a9f8205499195, type: 3}
+  - {fileID: 2800000, guid: ee740524d85616e49a89edc6e25969cc, type: 3}
 --- !u!64 &205109097
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -361,6 +365,7 @@ GameObject:
   - component: {fileID: 660551004}
   - component: {fileID: 660551003}
   - component: {fileID: 660551002}
+  - component: {fileID: 660551005}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -442,6 +447,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 45, y: 0, z: 0}
+--- !u!114 &660551005
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 660551001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2cd02784b0b728b40ad7f189037a15eb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ControleCamera
+  vitesseDeplacement: 20
+  sensibiliteSouris: 0.15
+  vitesseZoom: 0.5
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
