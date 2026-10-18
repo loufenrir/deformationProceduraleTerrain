@@ -286,6 +286,10 @@ public class CreationSimpleTerrain : MonoBehaviour
         float hauteurMax = 30f;
 
         // Parcourir les vertices (terrain)
+
+        // Avoir coordonnées maillage (UV)
+        Vector2[] uv = p_mesh.uv;
+
         for (int z = 0; z < resolution; z++)
         {
             for (int x = 0; x < resolution; x++)
@@ -294,7 +298,7 @@ public class CreationSimpleTerrain : MonoBehaviour
 
                 // Coordonnées HeightMap
                 float u = (float)x / (resolution - 1);
-                float v = (float)z / (resolution - 1);
+                float v = uv[index].y;
 
                 // Niveau de gris image
                 float niveauGris = texture.GetPixelBilinear(u, v).grayscale;
