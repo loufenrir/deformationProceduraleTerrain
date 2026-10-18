@@ -26,6 +26,14 @@ public class ControleCamera : MonoBehaviour
         if (Keyboard.current == null)
             return;
 
+        // Bloquer mouvement cam si aide ouverte
+        CreationSimpleTerrain terrainActuel = FindFirstObjectByType<CreationSimpleTerrain>();
+
+        if (terrainActuel != null && terrainActuel.afficherAide)
+        {
+            return;
+        }
+
         Vector3 direction = Vector3.zero;
 
         // Avancer / reculer
@@ -76,9 +84,6 @@ public class ControleCamera : MonoBehaviour
                 );
             }
         }
-
-        // Voir si fenêtre d'aide est ouverte
-        CreationSimpleTerrain terrainActuel = FindFirstObjectByType<CreationSimpleTerrain>();
 
         // Zoom avec molette
         if (terrainActuel == null || !terrainActuel.afficherAide)

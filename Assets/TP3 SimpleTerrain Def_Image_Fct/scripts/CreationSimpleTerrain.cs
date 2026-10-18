@@ -880,6 +880,12 @@ public class CreationSimpleTerrain : MonoBehaviour
             );
         }
 
+        // Si aide est ouverte =bloquer les interactions terrain
+        if (afficherAide)
+        {
+            return;
+        }
+
         //Modif ajoutée pour que pas de pb fonction (pour que l'on puisse bien clic sans pb après)
         if (Keyboard.current.f2Key.wasPressedThisFrame)
         {
