@@ -14,6 +14,12 @@ public class ControleCamera : MonoBehaviour
     // Vitesse zoom
     public float vitesseZoom = 0.05f;
 
+    // Terrain rotation
+    public Transform terrain;
+
+    // Vitesse rotation terrain
+    public float vitesseRotationTerrain = 0.2f;
+
     void Update()
     {
         // Vérif clavier ok?
@@ -43,23 +49,50 @@ public class ControleCamera : MonoBehaviour
         {
             Vector2 mouvementSouris = Mouse.current.delta.ReadValue();
 
-            transform.Rotate(
-                -mouvementSouris.y * sensibiliteSouris,
-                mouvementSouris.x * sensibiliteSouris,
-                0f,
-                Space.Self
-            );
-        }
+            // Maj bien enfoncée?
+            bool majEnfoncee = Keyboard.current.leftShiftKey.isPressed ||
+                               Keyboard.current.rightShiftKey.isPressed;
 
-        // Zoom avec molette
-        if (Mouse.current != null)
-        {
-            float molette = Mouse.current.scroll.ReadValue().y;
-
-            if (molette != 0f)
+            if (majEnfoncee && terrain != null)
             {
-                transform.position += transform.forward * molette * vitesseZoom;
+                Debug.Log("Rotation terrain détectée");
+
+                // Rotation terrain axe haut
+                terrain.Rotate(
+                    0f,
+                    mouvementSouris.x * vitesseRotationTerrain,
+                    0f,
+                    Space.World
+                );
+            }
+            else if (!majEnfoncee)
+            {
+                // Rotation cam
+                transform.Rotate(
+                    -mouvementSouris.y * sensibiliteSouris,
+                    mouvementSouris.x * sensibiliteSouris,
+                    0f,
+                    Space.Self
+                );
             }
         }
+
+        // Voir si fenêtre d'aide est ouverte
+        CreationSimpleTerrain terrainActuel = FindFirstObjectByType<CreationSimpleTerrain>();
+
+        // Zoom avec molette
+        if (terrainActuel == null || !terrainActuel.afficherAide)
+        {
+            if (Mouse.current != null)
+            {
+                float molette = Mouse.current.scroll.ReadValue().y;
+
+                if (molette != 0f)
+                {
+                    transform.position += transform.forward * molette * vitesseZoom;
+                }
+            }
+        }
+
     }
 }

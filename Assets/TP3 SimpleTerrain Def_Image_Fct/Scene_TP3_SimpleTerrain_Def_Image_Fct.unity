@@ -462,6 +462,8 @@ MonoBehaviour:
   vitesseDeplacement: 20
   sensibiliteSouris: 0.15
   vitesseZoom: 0.5
+  terrain: {fileID: 205109093}
+  vitesseRotationTerrain: 0.2
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

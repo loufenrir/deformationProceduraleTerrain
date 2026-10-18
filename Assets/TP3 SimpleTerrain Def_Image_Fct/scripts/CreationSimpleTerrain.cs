@@ -91,8 +91,39 @@ public class CreationSimpleTerrain : MonoBehaviour
     // Afficher / masquer normales
     private bool afficherNormales = false;
 
-    // Appuie numéro 1 sur F11
+    // F10 Mode affichage normales
+    public enum ModeAffichageNormales
+    {
+        Vertices,
+        Eclairage,
+        Orientation,
+        OrientationEtEclairage
+    }
+
+    // Mode affiché
+    private ModeAffichageNormales modeAffichageNormales = ModeAffichageNormales.Vertices;
+
+    // Mode affiché pendant 3 secondes
+    private ModeAffichageNormales modeAffichageActif;
+
+    // Durée affichage normales
+    private float finAffichageNormales = 0f;
+
+    // F11 Premier appuie
     private bool attenteDeuxiemeF11 = false;
+
+    // Fenêtre d'aide F1
+    public bool afficherAide = false;
+
+    // Position du défilement de l'aide
+    private Vector2 scrollAide = Vector2.zero;
+
+    // Nb image / seconde
+    private float fps = 0f;
+
+    // Calculer la moyenne des FPS parce que si non on'y voit rien (varrie trop vite)
+    private int nombreImages = 0;
+    private float tempsEcoule = 0f;
 
 
     // cette méthode est appelée la première fois que le component est ajouté à l'objet (ou quand reset demandé sur le component depuis l'inspector)
@@ -136,6 +167,7 @@ public class CreationSimpleTerrain : MonoBehaviour
     {
         p_cam = Camera.main;
 
+        //J'ai fait à part j'avais trop de pb
         // les rayCast exploiteront cette layer pour ne tester la collision qu'avec l'objet terrain
         gameObject.layer = LayerMask.NameToLayer("L_PickingTerrain");
         maskPickingTerrain = LayerMask.GetMask("L_PickingTerrain");
@@ -362,6 +394,22 @@ public class CreationSimpleTerrain : MonoBehaviour
         return normale.normalized;
     }
 
+    // Calcul normale éclairage de un triangle
+    private Vector3 calculerNormaleEclairage(int numTriangle)
+    {
+        // Indices vertices du triangle
+        int index = numTriangle * 3;
+
+        int i0 = p_triangles[index];
+        int i1 = p_triangles[index + 1];
+        int i2 = p_triangles[index + 2];
+
+        // Moyenne normales vertices
+        Vector3 normale = p_normals[i0] + p_normals[i1] + p_normals[i2];
+
+        return normale.normalized;
+    }
+
     // Nouvelle methode
     private Vector3 calculerNormaleTriangleSurface(int numTriangle)
     {
@@ -542,6 +590,73 @@ public class CreationSimpleTerrain : MonoBehaviour
         }
     }
 
+    // Affichage normales éclairage (triangles)
+    private void afficherNormalesEclairage()
+    {
+        float longueur = 2f;
+
+        // Parcourir les triangles
+        for (int i = 0; i < p_triangles.Length / 3; i++)
+        {
+            int index = i * 3;
+
+            // Indices vertices
+            int i0 = p_triangles[index];
+            int i1 = p_triangles[index + 1];
+            int i2 = p_triangles[index + 2];
+
+            // Position centre (triangle)
+            Vector3 centre = (
+                p_vertices[i0] +
+                p_vertices[i1] +
+                p_vertices[i2]
+            ) / 3f;
+
+            // Calcul normale d'éclairage
+            Vector3 normale = calculerNormaleEclairage(i);
+
+            // Conversion des coordonnées
+            Vector3 position = transform.TransformPoint(centre);
+            Vector3 direction = transform.TransformDirection(normale);
+
+            // Normale en bleu
+            Debug.DrawRay(position, direction * longueur, Color.blue);
+        }
+    }
+
+    // Afficher normales orientation triangles
+    private void afficherNormalesOrientation()
+    {
+        float longueur = 2f;
+
+        // Parcourir les triangles
+        for (int i = 0; i < p_triangles.Length / 3; i++)
+        {
+            int index = i * 3;
+
+            // Indices des vertices
+            int i0 = p_triangles[index];
+            int i1 = p_triangles[index + 1];
+            int i2 = p_triangles[index + 2];
+
+            // Centre du triangle
+            Vector3 centre = (
+                p_vertices[i0] +
+                p_vertices[i1] +
+                p_vertices[i2]
+            ) / 3f;
+
+            // Normale d'orientation
+            Vector3 normale = calculerNormaleTriangle(i);
+
+            // Coordonnées
+            Vector3 position = transform.TransformPoint(centre);
+            Vector3 direction = transform.TransformDirection(normale);
+
+            // Les mettre en rouge
+            Debug.DrawRay(position, direction * longueur, Color.red);
+        }
+    }
 
     // Remise à 0 du terrain
     private void reinitialiserTerrain()
@@ -719,15 +834,38 @@ public class CreationSimpleTerrain : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+
+        // Calcul FPS pour 1 seconde
+        nombreImages++;
+        tempsEcoule += Time.unscaledDeltaTime;
+
+        if (tempsEcoule >= 1f)
+        {
+            fps = nombreImages / tempsEcoule;
+
+            // Remise à 0 pour afficher prochain calcul FPS
+            nombreImages = 0;
+            tempsEcoule = 0f;
+        }
+
+
         // F1 : afficher l'aide
         if (Keyboard.current.f1Key.wasPressedThisFrame)
         {
+            afficherAide = !afficherAide;
             Debug.Log(
                 "Commandes Terrain------------------------------------------------------------\n" +
                 "F1 : Afficher l'aide\n" +
                 "F2 : Changer la fonction (fonction dispo : Sinusoide, Collines, Perlin)\n" +
                 "F3 : Changer la HeightMap\n" +
                 "F10 : Afficher / masquer normales\n" +
+                "F10 : Afficher les normales pendant 3 secondes (appuis successifs)\n" +
+                "appui 1 : Normales des vertices (vert)\n" +
+                "appui 2 : Normales éclairage (bleu)\n" +
+                "appui 3 : Normales d'orientation (rouge)\n" +
+                "appui 4 : Normales d'orientation et d'eclairage (rouge + bleu)\n" +
+                "appui 5 : Retour au premier mode\n" +
+
                 "F11 (2 fois) : Remettre le terrain à 0\n" +
                 "F12 : Changer calcul normales\n" +
                 "Clic souris gauche : Ajouter une colline\n" +
@@ -737,6 +875,7 @@ public class CreationSimpleTerrain : MonoBehaviour
                 "S : Reculer\n" +
                 "D : Aller à droite\n" +
                 "Clic droit enfoncé : Tourner cam\n" +
+                "Maj + clic droit : Tourner terrain\n" +
                 "Molette : Zoom avant / arrière\n"
             );
         }
@@ -785,11 +924,23 @@ public class CreationSimpleTerrain : MonoBehaviour
 
             Debug.Log("Mode de calcul des normales :" + modeCalculNormales);
         }
-        // F10 pour afficher / masquer normales
+        // F10 pour changer mode affichage normales
         if (Keyboard.current.f10Key.wasPressedThisFrame)
         {
-            afficherNormales = !afficherNormales;
-            Debug.Log("Affichage des normales : " + afficherNormales);
+            // Activer affichage pendant 3 secondes
+            afficherNormales = true;
+            finAffichageNormales = Time.time + 3f;
+
+            // Afficher le mode
+            Debug.Log("Mode affichage normales : " + modeAffichageNormales);
+
+            // Enregistrer le mode qui doit être affiché
+            modeAffichageActif = modeAffichageNormales;
+
+            // Préparer le mode d'après
+            modeAffichageNormales = (ModeAffichageNormales)(
+                ((int)modeAffichageNormales + 1) % 4
+            );
         }
         // F11 pour remise a 0 du terrain (F11*2)
         if (Keyboard.current.f11Key.wasPressedThisFrame)
@@ -809,10 +960,34 @@ public class CreationSimpleTerrain : MonoBehaviour
                 Debug.Log("Terrain remis à 0");
             }
         }
-        // Dessin normales quand activées
+        // Arrêt affichage après 3 secondes
+        if (afficherNormales && Time.time >= finAffichageNormales)
+        {
+            afficherNormales = false;
+        }
+
+        // Normales selon mode affichage sélectionné
         if (afficherNormales)
         {
-            afficherLesNormales();
+            switch (modeAffichageActif)
+            {
+                case ModeAffichageNormales.Vertices:
+                    afficherLesNormales();
+                    break;
+
+                case ModeAffichageNormales.Eclairage:
+                    afficherNormalesEclairage();
+                    break;
+
+                case ModeAffichageNormales.Orientation:
+                    afficherNormalesOrientation();
+                    break;
+
+                case ModeAffichageNormales.OrientationEtEclairage:
+                    afficherNormalesOrientation();
+                    afficherNormalesEclairage();
+                    break;
+            }
         }
 
         // Clic impact
@@ -834,6 +1009,119 @@ public class CreationSimpleTerrain : MonoBehaviour
             }
         }
 
+    }
 
+    // Affichage fenêtre d'aide
+    private void OnGUI()
+    {
+        if (afficherAide)
+        {
+            // Pos + taille fenêtre
+            float largeur = Mathf.Min(650f, Screen.width - 40f);
+            float hauteur = Mathf.Min(600f, Screen.height - 40f);
+
+            float x = (Screen.width - largeur) / 2f;
+            float y = (Screen.height - hauteur) / 2f;
+
+            // Fenêtre centrée
+            GUI.Box(
+                new Rect(x, y, largeur, hauteur),
+                "Aide : Génération procédurale terrain"
+            );
+
+            // Info maillage
+            GUI.Label(
+                new Rect(x + 20f, y + 70f, largeur - 40f, 25f),
+                "Nombre de vertices : " + p_dimVertices
+            );
+
+            GUI.Label(
+                new Rect(x + 20f, y + 100f, largeur - 40f, 25f),
+                "Nombre de triangles : " + p_dimTriangles
+            );
+
+            GUI.Label(
+                new Rect(x + 20f, y + 130f, largeur - 40f, 25f),
+                "Mode calcul normales : " + modeCalculNormales
+            );
+
+            // Poids mémoire maillage
+            long memoireVertices = p_dimVertices * 3L * sizeof(float);
+            long memoireNormales = p_dimVertices * 3L * sizeof(float);
+            long memoireUV = p_dimVertices * 2L * sizeof(float);
+            long memoireTriangles = p_dimTriangles * 3L * sizeof(int);
+
+            // Poids mémoire total (octets)
+            long memoireTotale = memoireVertices + memoireNormales +
+                                 memoireUV + memoireTriangles;
+
+            // En Ko
+            float memoireKo = memoireTotale / 1024f;
+
+            // Affichage poids mémoire
+            GUI.Label(
+                new Rect(x + 20f, y + 160f, largeur - 40f, 25f),
+                "Poids mémoire du maillage : " + memoireKo.ToString("F2") + " Ko"
+            );
+
+            // Affichage FPS
+            GUI.Label(
+                new Rect(x + 20f, y + 190f, largeur - 40f, 25f),
+                "FPS : " + fps.ToString("F0")
+            );
+
+
+            // Commandes fenêtre
+            GUILayout.BeginArea(new Rect(x + 20f, y + 225f, largeur - 40f, hauteur - 245f));
+
+            scrollAide = GUILayout.BeginScrollView(scrollAide);
+
+            GUILayout.Label("COMMANDES TERRAIN");
+            GUILayout.Space(10);
+
+            GUILayout.Label("F1 : Afficher l'aide");
+            GUILayout.Label("F2 : Changer la fonction (Sinusoide, Collines, Perlin)");
+            GUILayout.Label("F3 : Changer la HeightMap");
+
+            GUILayout.Space(10);
+
+            GUILayout.Label("F10 : Afficher les normales pendant 3 secondes");
+            GUILayout.Label("Appui 1 : Normales des vertices (vert)");
+            GUILayout.Label("Appui 2 : Normales eclairage (bleu)");
+            GUILayout.Label("Appui 3 : Normales d'orientation (rouge)");
+            GUILayout.Label("Appui 4 : Orientation et eclairage (rouge + bleu)");
+            GUILayout.Label("Appui 5 : Retour au premier mode");
+
+            GUILayout.Space(10);
+
+            GUILayout.Label("F11 (2 fois) : Remettre le terrain à 0");
+            GUILayout.Label("F12 : Changer calcul normales");
+            GUILayout.Label("Clic souris gauche : Ajouter une colline");
+
+            GUILayout.Space(15);
+
+            GUILayout.Label("DEPLACEMENT CAM");
+            GUILayout.Space(10);
+
+            GUILayout.Label("W / Z : Avancer");
+            GUILayout.Label("A / Q : Aller à gauche");
+            GUILayout.Label("S : Reculer");
+            GUILayout.Label("D : Aller à droite");
+            GUILayout.Label("Clic droit enfonce : Tourner cam");
+            GUILayout.Label("Maj + clic droit : Tourner terrain");
+            GUILayout.Label("Molette : Zoom avant / arrière");
+
+            GUILayout.EndScrollView();
+            GUILayout.EndArea();
+
+
+            // Fermer (bouton)
+            if (GUI.Button(new Rect(x + largeur - 110f, y + 30f, 90f, 30f), "Fermer"))
+            {
+                afficherAide = false;
+            }
+        }
     }
 }
+
+
